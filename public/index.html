@@ -1,42 +1,41 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Manager</title>
+    <title>Landing Page - StockTracker</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Portfolio Manager</h1>
-    <div id="dashboard">
-        <h2>Portfolio Metrics</h2>
-        <p>Total Portfolio Value: $<span id="portfolio-value">0</span></p>
-    </div>
-    <div id="form-section">
-        <h2>Add/Edit Stock</h2>
-        <form id="stock-form">
-            <input type="text" id="stock-name" placeholder="Stock Name" required>
-            <input type="text" id="stock-ticker" placeholder="Ticker" required>
-            <input type="number" id="stock-quantity" placeholder="Quantity" required>
-            <input type="number" id="stock-price" placeholder="Buy Price" required>
-            <button type="submit">Add Stock</button>
-        </form>
-    </div>
-    <div id="stock-table">
-        <h2>Current Holdings</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Ticker</th>
-                    <th>Quantity</th>
-                    <th>Buy Price</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-        </table>
-    </div>
-    <script src="script.js"></script>
+    <header>
+        <div class="navbar">
+            <div class="logo">StockTracker</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="landing">
+            <h1>Welcome to StockTracker</h1>
+            <p>Search stocks as a guest or log in to manage your portfolio</p>
+            
+            <!-- Stock Search for Guests -->
+            <div class="stock-search">
+                <input type="text" id="stock-symbol" placeholder="Enter stock symbol" />
+                <button id="search-btn" class="btn">Search</button>
+            </div>
+            
+            <div class="auth-options">
+                <button id="login-btn" class="btn">Login</button>
+                <button id="signup-btn" class="btn">Sign Up</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>StockTracker &copy; 2024</p>
+    </footer>
+
+    <script src="landing.js"></script>
 </body>
 </html>

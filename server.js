@@ -1,101 +1,159 @@
-require("dotenv").config(); // Load environment variables from .env
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
-const bodyParser = require("body-parser");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const axios = require("axios");
-
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-
-// Load environment variables
-const { MONGO_URI, API_KEY } = process.env;
+const cors = require("cors");
+require("dotenv").config();
 const path = require("path");
 
+// Initialize the Express app
+const app = express();
 
-// Serve static files from the "public" folder
+// Middleware setup
+app.use(express.json()); // Parse incoming JSON requests
+app.use(cors()); // Enable Cross-Origin Resource Sharing (CORS)
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("Connected to MongoDB"))
+    .catch(err => console.log(err));
+
+// Models
+const User = mongoose.model("User", new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    portfolio: [{ type: mongoose.Schema.Types.ObjectId, ref: "Stock" }],
+}));
+
+const Stock = mongoose.model("Stock", new mongoose.Schema({
+    symbol: { type: String, required: true },
+    name: { type: String, required: true },
+    currentPrice: { type: Number, required: true },
+    amount: { type: Number, required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+}));
+
+// Serve frontend (static HTML, CSS, JS) at the root URL
 app.use(express.static(path.join(__dirname, "public")));
 
-
-// MongoDB Connection
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("Connected to MongoDB"))
-    .catch(err => console.error("MongoDB connection error:", err));
-
-// Schema & Model
-const stockSchema = new mongoose.Schema({
-    name: String,
-    ticker: String,
-    quantity: Number,
-    buyPrice: Number,
-});
-const Stock = mongoose.model("Stock", stockSchema);
-
-// Fetch Stock Price from Alpha Vantage
-async function fetchStockPrice(ticker) {
-    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${API_KEY}`;
-    try {
-        const response = await axios.get(url);
-        const price = response.data["Global Quote"]["05. price"];
-        return parseFloat(price); // Convert to a number
-    } catch (error) {
-        console.error("Error fetching stock price:", error.message);
-        return null;
-    }
-}
-
-// API Routes
-
-// Serve index.html on the root (/) route
+// Landing route for the root ("/") endpoint to serve the frontend
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-
-// Get all stocks
-app.get("/stocks", async (req, res) => {
+// Guest stock price lookup (No authentication required)
+app.get("/api/stock/:symbol", async (req, res) => {
+    const { symbol } = req.params;
     try {
-        const stocks = await Stock.find();
-        res.json(stocks);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch stocks" });
+        const response = await axios.get(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${process.env.STOCK_API_KEY}`);
+        const data = response.data;
+        if (data["Time Series (Daily)"]) {
+            const latestDate = Object.keys(data["Time Series (Daily)"])[0];
+            const stockInfo = data["Time Series (Daily)"][latestDate];
+            res.json({
+                symbol,
+                currentPrice: stockInfo["4. close"],
+                change: ((parseFloat(stockInfo["4. close"]) - parseFloat(stockInfo["1. open"])) / parseFloat(stockInfo["1. open"])) * 100,
+            });
+        } else {
+            res.status(404).json({ message: "Stock not found" });
+        }
+    } catch (error) {
+        res.status(400).json({ message: "Error fetching stock data" });
     }
 });
 
-// Add a new stock
-app.post("/stocks", async (req, res) => {
+// Sign up route
+app.post("/api/signup", async (req, res) => {
+    const { username, email, password } = req.body;
     try {
-        const stock = new Stock(req.body);
-        await stock.save();
-        res.status(201).json(stock);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to add stock" });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ username, email, password: hashedPassword });
+        await newUser.save();
+        const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        res.json({ token });
+    } catch (error) {
+        res.status(400).json({ message: "Error signing up" });
     }
 });
 
-// Delete a stock
-app.delete("/stocks/:id", async (req, res) => {
+// Login route
+app.post("/api/login", async (req, res) => {
+    const { email, password } = req.body;
     try {
-        await Stock.findByIdAndDelete(req.params.id);
-        res.status(204).send();
-    } catch (err) {
-        res.status(500).json({ error: "Failed to delete stock" });
+        const user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ message: "User not found" });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        res.json({ token });
+    } catch (error) {
+        res.status(400).json({ message: "Error logging in" });
     }
 });
 
-// Fetch real-time stock price
-app.get("/stocks/price/:ticker", async (req, res) => {
-    const ticker = req.params.ticker;
-    const price = await fetchStockPrice(ticker);
+// Add stock to portfolio (User must be logged in)
+app.post("/api/portfolio", async (req, res) => {
+    const { token, symbol, name, currentPrice, amount } = req.body;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (price) {
-        res.json({ ticker, price });
-    } else {
-        res.status(500).json({ error: "Failed to fetch stock price" });
+        const newStock = new Stock({ symbol, name, currentPrice, amount, user: user._id });
+        await newStock.save();
+        user.portfolio.push(newStock);
+        await user.save();
+        res.json({ message: "Stock added to portfolio" });
+    } catch (error) {
+        res.status(400).json({ message: "Error adding stock to portfolio" });
     }
 });
 
-// Start Server
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Remove stock from portfolio (User must be logged in)
+app.delete("/api/portfolio/:stockId", async (req, res) => {
+    const { stockId } = req.params;
+    const { token } = req.body;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const stockToDelete = await Stock.findById(stockId);
+        if (!stockToDelete || stockToDelete.user.toString() !== user._id.toString()) {
+            return res.status(404).json({ message: "Stock not found in portfolio" });
+        }
+
+        await stockToDelete.remove();
+        user.portfolio = user.portfolio.filter(stock => stock.toString() !== stockId);
+        await user.save();
+
+        res.json({ message: "Stock removed from portfolio" });
+    } catch (error) {
+        res.status(400).json({ message: "Error removing stock from portfolio" });
+    }
+});
+
+// Portfolio route (Get user's portfolio)
+app.get("/api/portfolio", async (req, res) => {
+    const { token } = req.query;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId).populate("portfolio");
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.json(user.portfolio);
+    } catch (error) {
+        res.status(400).json({ message: "Error fetching portfolio" });
+    }
+});
+
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Server is running on port http://localhost:${port}`);
+});

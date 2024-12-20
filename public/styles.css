@@ -1,33 +1,65 @@
+/* styles.css */
 body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background-color: #f9f9f9;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
 }
 
-h1, h2 {
-    color: #333;
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 1rem;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: center;
+.navbar .logo {
+  font-size: 24px;
 }
 
 button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: #45a049;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+}
+
+main {
+  padding: 20px;
+}
+
+.landing {
+  text-align: center;
+}
+
+.auth-section {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#portfolio-table th, #portfolio-table td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+#portfolio-table th {
+  background-color: #f2f2f2;
 }
