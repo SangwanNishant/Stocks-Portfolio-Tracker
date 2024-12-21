@@ -1,65 +1,207 @@
-/* styles.css */
-body {
-  font-family: Arial, sans-serif;
+* {
   margin: 0;
   padding: 0;
-  background-color: #f4f4f4;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #cfbebe;
+}
+
+.container {
+  width: 95%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px;
 }
 
 header {
   background-color: #333;
-  color: #fff;
-  padding: 1rem;
-}
-
-.navbar .logo {
-  font-size: 24px;
-}
-
-button {
-  background-color: #4CAF50;
   color: white;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
-button:hover {
-  background-color: #45a049;
+header h1 {
+  font-size: clamp(1.2rem, 4vw, 2rem);
+}
+
+.auth-forms {
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 1rem auto;
+}
+
+.form {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
 }
 
 input {
-  padding: 10px;
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+button {
+  background: #333;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   margin: 5px;
+  white-space: nowrap;
 }
 
-main {
-  padding: 20px;
+button:hover {
+  background: #555;
 }
 
-.landing {
-  text-align: center;
+.search-section {
+  background: rgb(135, 122, 122);
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
 }
 
-.auth-section {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.search-section input {
+  max-width: 300px;
+  margin-right: 10px;
+  display: inline-block;
 }
 
-#portfolio-table {
+.portfolio-summary {
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+.portfolio-summary h3 {
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: clamp(1rem, 3vw, 1.5rem);
+}
+
+.portfolio-summary p {
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  margin-bottom: 0.5rem;
+}
+
+.portfolio-section {
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
+.portfolio-section h2 {
+  font-size: clamp(1.1rem, 3.5vw, 1.8rem);
+  margin-bottom: 1rem;
+}
+
+table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1rem;
+  min-width: 700px;
 }
 
-#portfolio-table th, #portfolio-table td {
+th, td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+}
+
+th {
+  background-color: #f4f4f4;
+  white-space: nowrap;
+}
+
+td {
+  white-space: nowrap;
+}
+
+.search-result {
+  margin-top: 1rem;
   padding: 10px;
-  text-align: center;
   border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-#portfolio-table th {
-  background-color: #f2f2f2;
+.search-result h3 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+}
+
+.search-result input {
+  max-width: 150px;
+  margin: 10px 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+      width: 100%;
+      padding: 5px;
+  }
+
+  header {
+      text-align: center;
+      justify-content: center;
+  }
+
+  #auth-buttons, #user-info {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+  }
+
+  .search-section {
+      text-align: center;
+  }
+
+  .search-section input {
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: none;
+  }
+
+  .portfolio-summary {
+      text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  button {
+      width: 100%;
+      margin: 5px 0;
+  }
+
+  .form {
+      padding: 10px;
+  }
+
+  th, td {
+      padding: 5px;
+  }
 }

@@ -1,148 +1,210 @@
-let currentUser = null; // This tracks the logged-in user
-let portfolio = []; // This holds the user's portfolio
+let token = null;
+let isGuest = true; // Start as guest by default
 
-// Show login form when Login button is clicked
-document.getElementById('login-btn').addEventListener('click', () => {
+// Auth Functions
+function showLoginForm() {
     document.getElementById('login-form').style.display = 'block';
     document.getElementById('signup-form').style.display = 'none';
-});
+}
 
-// Show signup form when Sign Up button is clicked
-document.getElementById('signup-btn').addEventListener('click', () => {
+function showSignupForm() {
+    document.getElementById('login-form').style.display = 'none';
     document.getElementById('signup-form').style.display = 'block';
-    document.getElementById('login-form').style.display = 'none';
-});
+}
 
-// Close login form
-document.getElementById('close-login').addEventListener('click', () => {
-    document.getElementById('login-form').style.display = 'none';
-});
-
-// Close signup form
-document.getElementById('close-signup').addEventListener('click', () => {
-    document.getElementById('signup-form').style.display = 'none';
-});
-
-// Simulate login with hardcoded credentials
-document.getElementById('submit-login').addEventListener('click', () => {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    
-    // Simulating a successful login (In real app, use DB verification)
-    currentUser = email;
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('auth-buttons').style.display = 'none'; // Hide login/signup buttons
-    document.getElementById('portfolio-section').style.display = 'block'; // Show portfolio section
-    loadPortfolio();
-});
-
-// Simulate signup and login
-document.getElementById('submit-signup').addEventListener('click', () => {
+async function signup() {
     const username = document.getElementById('signup-username').value;
-    const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
 
-    // Simulating successful signup and login
-    currentUser = email;
-    document.getElementById('signup-form').style.display = 'none';
-    document.getElementById('auth-buttons').style.display = 'none'; // Hide login/signup buttons
-    document.getElementById('portfolio-section').style.display = 'block'; // Show portfolio section
-    loadPortfolio();
-});
-
-// Search functionality (accessible for everyone)
-document.getElementById('search-btn').addEventListener('click', () => {
-    const stockSymbol = document.getElementById('stock-symbol').value.trim();
-    if (!stockSymbol) return alert("Please enter a stock symbol.");
-    
-    fetchStockData(stockSymbol);
-});
-
-// Fetch stock data from Alpha Vantage API
-async function fetchStockData(symbol) {
-    const apiKey = 'YOUR_API_KEY'; // Use your API key here
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}`;
-
     try {
-        const response = await fetch(url);
+        const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
         const data = await response.json();
-        
-        if (data["Time Series (Daily)"]) {
-            displayStockData(symbol, data);
+        if (response.ok) {
+            token = data.token;
+            loginSuccess(username);
         } else {
-            alert("Stock not found.");
+            alert(data.error);
         }
     } catch (error) {
-        console.error("Error fetching data:", error);
+        alert('Signup failed');
     }
 }
 
-// Display stock data and "Add to Portfolio" button if logged in
-function displayStockData(symbol, data) {
-    const stockList = document.getElementById("stock-list");
-    const latestDate = Object.keys(data["Time Series (Daily)"])[0];
-    const stockInfo = data["Time Series (Daily)"][latestDate];
-    const stockCard = document.createElement("div");
-    stockCard.classList.add("stock-card");
+async function login() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
 
-    const price = stockInfo["4. close"];
-    const change = ((parseFloat(price) - parseFloat(stockInfo["1. open"])) / parseFloat(stockInfo["1. open"])) * 100;
-    const changeClass = change >= 0 ? "positive" : "negative";
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
 
-    stockCard.innerHTML = `
-        <h3>${symbol.toUpperCase()}</h3>
-        <p>Price: <span class="price">$${parseFloat(price).toFixed(2)}</span></p>
-        <p class="change ${changeClass}">${change.toFixed(2)}%</p>
-        <p>Last Updated: ${latestDate}</p>
-    `;
-
-    // Show the 'Add to Portfolio' button only if the user is logged in
-    if (currentUser) {
-        const addButton = document.createElement('button');
-        addButton.textContent = 'Add to Portfolio';
-        addButton.addEventListener('click', () => addStockToPortfolio(symbol, parseFloat(price).toFixed(2)));
-        stockCard.appendChild(addButton);
+        const data = await response.json();
+        if (response.ok) {
+            token = data.token;
+            loginSuccess(username);
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        alert('Login failed');
     }
-
-    stockList.appendChild(stockCard);
 }
 
-// Add stock to portfolio
-function addStockToPortfolio(symbol, price) {
-    portfolio.push({ symbol, price, shares: 1 });
+function loginSuccess(username) {
+    isGuest = false;
+    document.getElementById('auth-buttons').style.display = 'none';
+    document.getElementById('auth-forms').style.display = 'none';
+    document.getElementById('user-info').style.display = 'block';
+    document.getElementById('username-display').textContent = username;
+    document.getElementById('portfolio-section').style.display = 'block';
     loadPortfolio();
 }
 
-// Load portfolio (show added stocks)
-function loadPortfolio() {
-    const portfolioTable = document.getElementById('portfolio-body');
-    portfolioTable.innerHTML = '';
-    portfolio.forEach((stock, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${stock.symbol}</td>
-            <td>${stock.shares}</td>
-            <td>${stock.price}</td>
-            <td><button onclick="removeStock(${index})">Remove</button></td>
+function logout() {
+    token = null;
+    isGuest = true;
+    document.getElementById('auth-buttons').style.display = 'block';
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('portfolio-section').style.display = 'none';
+    document.getElementById('portfolio-summary').style.display = 'none';
+}
+
+// Stock Functions
+async function searchStock() {
+    const symbol = document.getElementById('stock-search').value.toUpperCase();
+    
+    try {
+        const response = await fetch(`/api/stocks/search/${symbol}`);
+        const data = await response.json();
+        
+        if (data['Global Quote']) {
+            const quote = data['Global Quote'];
+            const price = quote['05. price'];
+            
+            const resultHtml = `
+                <div class="search-result">
+                    <h3>${symbol}</h3>
+                    <p>Price: $${parseFloat(price).toFixed(2)}</p>
+                    ${!isGuest ? `
+                        <input type="number" id="shares-input" placeholder="Number of shares">
+                        <button onclick="addToPortfolio('${symbol}', ${price})">Add to Portfolio</button>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('search-result').innerHTML = resultHtml;
+        } else {
+            document.getElementById('search-result').innerHTML = '<p>Stock not found</p>';
+        }
+    } catch (error) {
+        document.getElementById('search-result').innerHTML = '<p>Error searching for stock</p>';
+    }
+}
+
+async function addToPortfolio(symbol, price) {
+    const shares = document.getElementById('shares-input').value;
+    
+    try {
+        const response = await fetch('/api/stocks/portfolio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                symbol,
+                shares: Number(shares),
+                purchasePrice: Number(price)
+            })
+        });
+
+        if (response.ok) {
+            loadPortfolio();
+            document.getElementById('search-result').innerHTML = '';
+            document.getElementById('stock-search').value = '';
+        } else {
+            alert('Failed to add stock to portfolio');
+        }
+    } catch (error) {
+        alert('Error adding stock to portfolio');
+    }
+}
+
+async function loadPortfolio() {
+    if (isGuest) return;
+
+    try {
+        const response = await fetch('/api/stocks/portfolio', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const portfolio = await response.json();
+        const tbody = document.getElementById('portfolio-body');
+        tbody.innerHTML = '';
+
+        let totalPortfolioValue = 0;
+        let totalInitialValue = 0;
+
+        portfolio.forEach(stock => {
+            const totalValue = stock.totalValue;
+            const initialValue = stock.shares * stock.purchasePrice;
+            totalPortfolioValue += totalValue;
+            totalInitialValue += initialValue;
+
+            const row = `
+                <tr>
+                    <td>${stock.symbol}</td>
+                    <td>${stock.shares}</td>
+                    <td>$${stock.purchasePrice.toFixed(2)}</td>
+                    <td>$${stock.currentPrice.toFixed(2)}</td>
+                    <td>$${totalValue.toFixed(2)}</td>
+                    <td>${stock.performance.toFixed(2)}%</td>
+                    <td>
+                        <button onclick="removeFromPortfolio('${stock.symbol}')">Remove</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+
+        // Update portfolio summary
+        const totalPerformance = ((totalPortfolioValue - totalInitialValue) / totalInitialValue) * 100;
+        document.getElementById('portfolio-summary').innerHTML = `
+            <h3>Portfolio Summary</h3>
+            <p>Total Value: $${totalPortfolioValue.toFixed(2)}</p>
+            <p>Total Performance: ${totalPerformance.toFixed(2)}%</p>
         `;
-        portfolioTable.appendChild(row);
-    });
-
-    // Update total value and profit/loss
-    updatePortfolioSummary();
+        document.getElementById('portfolio-summary').style.display = 'block';
+    } catch (error) {
+        console.error('Error loading portfolio:', error);
+    }
 }
 
-// Remove stock from portfolio
-function removeStock(index) {
-    portfolio.splice(index, 1);
-    loadPortfolio();
-}
+async function removeFromPortfolio(symbol) {
+    try {
+        const response = await fetch(`/api/stocks/portfolio/${symbol}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-// Update total portfolio value and profit/loss
-function updatePortfolioSummary() {
-    const totalValue = portfolio.reduce((acc, stock) => acc + (stock.shares * stock.price), 0);
-    const totalProfitLoss = portfolio.reduce((acc, stock) => acc + (stock.shares * (stock.price - stock.price)), 0); // Assuming no previous prices for simplicity
-
-    document.getElementById('total-value').textContent = `$${totalValue.toFixed(2)}`;
-    document.getElementById('total-profit-loss').textContent = `$${totalProfitLoss.toFixed(2)}`;
+        if (response.ok) {
+            loadPortfolio();
+        } else {
+            alert('Failed to remove stock from portfolio');
+        }
+    } catch (error) {
+        alert('Error removing stock from portfolio');
+    }
 }

@@ -1,41 +1,72 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page - StockTracker</title>
+    <title>Stock Portfolio</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <div class="navbar">
-            <div class="logo">StockTracker</div>
+    <div class="container">
+        <header>
+            <h1>Stock Portfolio Manager</h1>
+            <div id="auth-buttons">
+                <button onclick="showLoginForm()">Login</button>
+                <button onclick="showSignupForm()">Sign Up</button>
+            </div>
+            <div id="user-info" style="display: none;">
+                <span id="username-display"></span>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div id="auth-forms" class="auth-forms">
+            <div id="login-form" class="form" style="display: none;">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username">
+                <input type="password" id="login-password" placeholder="Password">
+                <button onclick="login()">Login</button>
+            </div>
+
+            <div id="signup-form" class="form" style="display: none;">
+                <h2>Sign Up</h2>
+                <input type="text" id="signup-username" placeholder="Username">
+                <input type="password" id="signup-password" placeholder="Password">
+                <button onclick="signup()">Sign Up</button>
+            </div>
         </div>
-    </header>
 
-    <main>
-        <section class="landing">
-            <h1>Welcome to StockTracker</h1>
-            <p>Search stocks as a guest or log in to manage your portfolio</p>
-            
-            <!-- Stock Search for Guests -->
-            <div class="stock-search">
-                <input type="text" id="stock-symbol" placeholder="Enter stock symbol" />
-                <button id="search-btn" class="btn">Search</button>
+        <div class="search-section">
+            <h2>Search Stocks</h2>
+            <div class="search-container">
+                <input type="text" id="stock-search" placeholder="Enter stock symbol">
+                <button onclick="searchStock()">Search</button>
             </div>
-            
-            <div class="auth-options">
-                <button id="login-btn" class="btn">Login</button>
-                <button id="signup-btn" class="btn">Sign Up</button>
+            <div id="search-result"></div>
+        </div>
+
+        <div id="portfolio-summary" class="portfolio-summary" style="display: none;"></div>
+
+        <div id="portfolio-section" class="portfolio-section" style="display: none;">
+            <h2>Your Portfolio</h2>
+            <div class="table-container">
+                <table id="portfolio-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Shares</th>
+                            <th>Purchase Price</th>
+                            <th>Current Price</th>
+                            <th>Total Value</th>
+                            <th>Performance</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolio-body"></tbody>
+                </table>
             </div>
-        </section>
-    </main>
-
-    <footer>
-        <p>StockTracker &copy; 2024</p>
-    </footer>
-
-    <script src="landing.js"></script>
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
